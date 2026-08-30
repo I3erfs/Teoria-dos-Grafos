@@ -1,0 +1,117 @@
+"""
+Laboratório 1 - Estrutura Básica do Grafo
+Disciplina: Teoria dos Grafos
+Aluno: Bernardo Friske de Souza
+Professor: Luis Augusto Martins Pereira
+"""
+
+class Graph:
+    """Representa um grafo não-direcionado usando listas de adjacência ordenadas."""
+
+    def __init__(self):
+        """Inicializa um dicionário vazio para armazenar os vértices e seus vizinhos."""
+        self.dicio = {}
+
+    def _busca_binaria_indice(self, lista, x):
+        """
+        Realiza busca binária para encontrar a o índice de inserção que mantém ordem lexicográfica e o retorna
+        """
+        baixa = 0
+        alta = len(lista) - 1
+        
+        while baixa <= alta:
+            meio = (baixa + alta) // 2
+            if lista[meio] < x:
+                baixa = meio + 1
+            elif lista[meio] > x:
+                alta = meio - 1
+            else:
+                return meio  # O elemento já existe na lista
+        return baixa  # Posição ideal de inserção
+
+    def aresta(self, v1, v2):
+        """Adiciona uma aresta entre v1 e v2, atualizando a lista de ambos os vértices."""
+        if v1 not in self.dicio:
+            self.dicio[v1] = []
+        if v2 not in self.dicio:
+            self.dicio[v2] = []
+            
+        # Insere a conexão mantendo a ordem e evitando duplicatas
+        self._inserir_ordenado(v1, v2)
+        self._inserir_ordenado(v2, v1)
+
+    def _inserir_ordenado(self, origem, destino):
+        """Método auxiliar para inserir um vizinho na lista de forma ordenada."""
+        lista = self.dicio[origem]
+        idx = self._busca_binaria_indice(lista, destino)
+        
+        # Só insere se o destino não existir na lista (evita arestas repetidas)
+        if idx == len(lista) or lista[idx] != destino:
+            lista.insert(idx, destino)
+
+    def ordem(self):
+        """Retorna a ordem do grafo (número total de vértices)."""
+        return len(self.dicio)
+
+    def graus_min_max(self):
+        """Retorna o grau mínimo e o grau máximo encontrados no grafo."""
+        if not self.dicio:
+            return 0, 0
+        graus = [len(lista) for lista in self.dicio.values()]
+        return min(graus), max(graus)
+
+    def existe_aresta(self, v1, v2):
+        """Verifica a existência de uma aresta entre v1 e v2 usando busca binária."""
+        if v1 not in self.dicio:
+            return False
+        lista = self.dicio[v1]
+        idx = self._busca_binaria_indice(lista, v2)
+        return idx < len(lista) and lista[idx] == v2
+
+
+# --- Bloco de Execução Principal ---
+if __name__ == "__main__":
+    try:
+        # 1. Leitura inicial
+        line = input().split()
+        if not line:
+            exit()
+            
+        tam = int(line[0])
+        grafo = Graph()
+
+        # 2. Leitura das arestas
+        for _ in range(tam):
+            v1, v2 = input().split()
+            grafo.aresta(v1, v2)
+
+        # 3. Preparação dos dados de saída
+        vertices_ordenados = sorted(grafo.dicio.keys())
+        graus_ordenados = [len(grafo.dicio[v]) for v in vertices_ordenados]
+        
+        ordem_grafo = grafo.ordem()
+        num_arestas = sum(graus_ordenados) // 2
+        v_min, v_max = grafo.graus_min_max()
+        
+        # Cálculo do grau médio
+        avg_degree = sum(graus_ordenados) / ordem_grafo if ordem_grafo > 0 else 0.0
+
+        # 4. Impressão das estatísticas do grafo
+        print(f"Order: {ordem_grafo}")
+        print(f"Size: {num_arestas}")
+        print(f"Min degree: {v_min}")
+        print(f"Max degree: {v_max}")
+        print(f"Average degree: {avg_degree:.1f}")
+        print(f"Degree list: {graus_ordenados}")
+
+        # 5. Impressão da Lista de Adjacência (vértices em ordem alfabética)
+        for v in vertices_ordenados:
+            print(f"{v}: {grafo.dicio[v]}")
+
+        # 6. Teste de existência de aresta (última linha da entrada)
+        v_teste = input().split()
+        if len(v_teste) == 2:
+            print(grafo.existe_aresta(v_teste[0], v_teste[1]))
+
+    except EOFError:
+        pass
