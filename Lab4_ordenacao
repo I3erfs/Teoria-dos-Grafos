@@ -1,0 +1,279 @@
+"""
+
+Laboratório 4 - Ordenação para Sistema de Agendamento de Tarefas
+
+Disciplina: Teoria dos Grafos
+
+Aluno: Bernardo Friske de Souza
+
+Professor: Luis Augusto Martins Pereira
+
+"""
+
+
+
+
+
+class Graph:
+
+        """Representa um grafo direcionado usando listas de adjacência ordenadas."""
+
+
+
+        def __init__(self):
+
+            self.dicio = {}
+
+
+
+        def _busca_binaria_indice(self, lista, x):
+
+            baixa = 0
+
+            alta = len(lista) - 1
+
+
+
+            while baixa <= alta:
+
+                meio = (baixa + alta) // 2
+
+                if lista[meio] < x:
+
+                    baixa = meio + 1
+
+                elif lista[meio] > x:
+
+                    alta = meio - 1
+
+                else:
+
+                    return meio
+
+            return baixa
+
+
+
+        def aresta(self, v1, v2):
+
+            if v1 not in self.dicio:
+
+                self.dicio[v1] = []
+
+            if v2 not in self.dicio:
+
+                self.dicio[v2] = []
+
+            self._inserir_ordenado(v1, v2)
+
+
+
+        def _inserir_ordenado(self, origem, destino):
+
+            lista = self.dicio[origem]
+
+            idx = self._busca_binaria_indice(lista, destino)
+
+            if idx == len(lista) or lista[idx] != destino:
+
+                lista.insert(idx, destino)
+
+
+
+        def ordem(self):
+
+            """Retorna o número de vértices no grafo."""
+
+            return len(self.dicio)
+
+
+
+        def graus_min_max(self):
+
+            """Retorna o grau mínimo e o grau máximo encontrados no grafo."""
+
+            if not self.dicio:
+
+                return 0, 0
+
+            graus = [len(lista) for lista in self.dicio.values()]
+
+            return min(graus), max(graus)
+
+
+
+        def existe_aresta(self, v1, v2):
+
+            """Verifica a existência de uma aresta entre v1 e v2 usando busca binária."""
+
+            if v1 not in self.dicio:
+
+                return False
+
+            lista = self.dicio[v1]
+
+            idx = self._busca_binaria_indice(lista, v2)
+
+            return idx < len(lista) and lista[idx] == v2
+
+
+
+        def cria_matriz(self, vertices_ordernados):
+
+          """Cria a matriz de adjacência a partir da lista de adjacência"""
+
+          matriz = [[0 for _ in vertices_ordernados] for _ in vertices_ordenados]
+
+          aux=0;
+
+          for j in vertices_ordenados:
+
+            for v in self.dicio[j]:
+
+              for i in range(len(vertices_ordenados)):
+
+                if v==vertices_ordenados[i]:
+
+                  posicao=i;
+
+              #posicao = v.index(vertices_ordenados)
+
+              matriz[aux][posicao] = 1
+
+              matriz[posicao][aux] = 1
+
+            aux+=1
+
+          return matriz
+
+
+
+
+
+        def ordenacao_topologica(self, visitados, lista, no):
+
+            """Realiza a ordenação topológica e detecta ciclos."""
+
+            # Estado 1: Visitando
+
+            visitados[no] = 1
+
+            tamanho_vizinhos = len(self.dicio[no])
+
+            for i in range(tamanho_vizinhos - 1, -1, -1):
+
+                u = self.dicio[no][i]
+
+                #  Detecção de ciclo
+
+                if visitados[u] == 1:
+
+                    return False
+
+                # Se estado for 0, continua a busca
+
+                if visitados[u] == 0:
+
+                    if not self.ordenacao_topologica(visitados, lista, u):
+
+                        return False
+
+            # Estado 2: Concluído
+
+            visitados[no] = 2
+
+            lista.append(no)
+
+            return True
+
+
+
+        def ordena_grafo(self, vertices_ordenados):
+
+            visitados = {}
+
+            lista = []
+
+            for no in vertices_ordenados:
+
+                visitados[no] = 0
+
+            for i in range(len(vertices_ordenados) - 1, -1, -1):
+
+                no = vertices_ordenados[i]
+
+                if visitados[no] == 0:
+
+                    if not self.ordenacao_topologica(visitados, lista, no):
+
+                        return None
+
+            return lista
+
+
+
+
+
+#  Bloco de Execução Principal
+
+if __name__ == "__main__":
+
+    try:
+
+        # 1. Leitura do número de arestas
+
+        entrada = input().strip()
+
+        if not entrada:
+
+            exit()
+
+
+
+        tam = int(entrada)
+
+        grafo = Graph()
+
+
+
+        # 2. Leitura das N arestas
+
+        for _ in range(tam):
+
+            v1, v2 = input().split()
+
+            grafo.aresta(v1, v2)
+
+
+
+        # 3. Lista com vértices ordenados (O professor permitiu usar sorted UMA vez)
+
+        vertices_ordenados = sorted(grafo.dicio.keys())
+
+
+
+        # 4. Ordenação Topológica do Grafo
+
+        lista = grafo.ordena_grafo(vertices_ordenados)
+
+
+
+        if lista is None:
+
+            print("Nao eh possivel gerar uma sequencia valida de execucao.")
+
+        else:
+
+            quant = len(lista)
+
+            for i in range(quant):
+
+                print(lista[quant - 1 - i], end=" ")
+
+            print()
+
+
+
+    except EOFError:
+
+        pass
