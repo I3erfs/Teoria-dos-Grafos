@@ -1,0 +1,170 @@
+"""
+Laboratório 5 - Caminho de Menor Custo
+Disciplina: Teoria dos Grafos
+Aluno: Bernardo Friske de Souza
+Professor: Luis Augusto Martins Pereira
+"""
+
+class Graph:
+        """Representa um grafo não-direcionado usando listas de adjacência ordenadas."""
+
+        def __init__(self):
+            """Inicializa um dicionário vazio para armazenar os vértices e vizinhos."""
+            self.dicio = {}
+            self.dist = {}
+            self.centro_dist = []
+
+        def _busca_binaria_indice(self, lista, x):
+            """
+            Realiza busca binária para encontrar a posição correta de inserção.
+            Retorna o índice onde 'x' está ou deveria ser inserido para manter a ordem.
+            """
+            baixa = 0
+            alta = len(lista) - 1
+
+            while baixa <= alta:
+                meio = (baixa + alta) // 2
+                if lista[meio] < x:
+                    baixa = meio + 1
+                elif lista[meio] > x:
+                    alta = meio - 1
+                else:
+                    return meio  # Elemento já existe
+            return baixa  # Posição ideal de inserção
+
+        def aresta(self, v1, v2, dist):
+            """ Adiciona uma aresta entre v1 e v2 E o peso dela, atualizando a lista de ambos vértices """
+
+            if v1 not in self.dicio:
+                self.dicio[v1] = []
+            if v2 not in self.dicio:
+                self.dicio[v2] = []
+
+            # Insere aresta com direção inversa mantendo a ordem alfabética e evita duplicatas
+            self._inserir_ordenado(v2, v1)
+
+
+            #Adição do peso da aresta com sentido inverso
+            self.dist[(v2, v1)]=dist
+
+        def _inserir_ordenado(self, origem, destino):
+            """Método auxiliar para inserir um vizinho na lista de forma ordenada."""
+            lista = self.dicio[origem]
+            idx = self._busca_binaria_indice(lista, destino)
+
+            # Só insere se o destino não existir na lista (evita arestas repetidas)
+            if idx == len(lista) or lista[idx] != destino:
+                lista.insert(idx, destino)
+
+        def ordem(self):
+            """Retorna o número de vértices no grafo."""
+            return len(self.dicio)
+
+        def graus_min_max(self):
+            """Retorna o grau mínimo e o grau máximo encontrados no grafo."""
+            if not self.dicio:
+                return 0, 0
+            graus = [len(lista) for lista in self.dicio.values()]
+            return min(graus), max(graus)
+
+        def existe_aresta(self, v1, v2):
+            """Verifica a existência de uma aresta entre v1 e v2 usando busca binária."""
+            if v1 not in self.dicio:
+                return False
+            lista = self.dicio[v1]
+            idx = self._busca_binaria_indice(lista, v2)
+            return idx < len(lista) and lista[idx] == v2
+
+        def cria_centro_dist(self, id, disponivel):
+          """Define os centros de distribuição com produto em estoque"""
+          if disponivel == '1':
+            self.centro_dist.append(id)
+
+        def alg_dijkstra(self, origem):
+            """Algoritmo de Dijkstra para encontrar o caminho mais curto."""
+            distancias = {v: float('inf') for v in grafo.dicio.keys()}
+            distancias[origem] = 0
+            S = []
+            Q = []
+            centro_escolhido = None
+            for v in self.dicio.keys():
+              Q.append(v)
+            predecessor = {v: None for v in grafo.dicio.keys()}
+            while Q:
+              u = self.menos_distante(Q, distancias)
+              if u is None: #grafo desconexo
+                return distancias, predecessor, centro_escolhido
+              for centro in self.centro_dist:
+                if u == centro:
+                  centro_escolhido=u
+                  return distancias, predecessor, centro_escolhido
+              S.append(u)
+              for v in self.dicio[u]:
+                self.relaxa(u, v, distancias, predecessor)
+            return distancias, predecessor, centro_escolhido
+
+        def menos_distante(self, Q, distancias):
+          """ Função que acha vértice da lista Q com menor distância"""
+          dist=float('inf')
+          u=None
+          for v in Q:
+            if (distancias[v]<dist):
+              u=v
+              dist=distancias[v]
+          if u is None: #Caso seja desconexo e todos nós restantes tenham distância infinita
+            return None
+          Q.remove(u)
+          return u
+
+
+        def relaxa(self, u, v, distancias, predecessor):
+          """ Relaxa as arestas adjacentes a novo vétice em S"""
+          nova_dist=self.dist[(u,v)]+distancias[u]
+          if(nova_dist<distancias[v]):
+            distancias[v]=nova_dist
+            predecessor[v] = u
+
+
+# --- Bloco de Execução Principal ---
+if __name__ == "__main__":
+        try:
+            # 1. Leitura do número de arestas
+            tam = int (input())
+            if not tam:
+                exit()
+            grafo = Graph()
+
+            # 2. Leitura das M arestas e das distâncias
+            for _ in range(tam):
+                v1, v2, str_dist = input().split()
+                dist=int(str_dist)
+                grafo.aresta(v1, v2, dist)
+
+            # 3. Leitura dos centros de distribuição e da origem para algoritmo
+            quant = int (input())
+            if not quant:
+                exit
+            for _ in range(quant):
+              id, disponivel = input().split()
+              grafo.cria_centro_dist(id, disponivel)
+            origem = input()
+            if not grafo.centro_dist:
+              print(f"Nao ha rotas para {origem} ou o produto em estoque")
+            else:
+                # 4. Algoritmo de Dijkstra
+                distancias, predecessor, centro_escolhido = grafo.alg_dijkstra(origem)
+                """procedimento caso não retorne centro_escolhido na função"""
+                if centro_escolhido is None:
+                  print(f"Nao ha rotas para {origem} ou o produto em estoque")
+                else:
+                    # Calculo da distância para o centro e impressão do caminho
+                    tempo = distancias[centro_escolhido]//100
+                    print( f"{centro_escolhido} {tempo}")
+                    no=centro_escolhido
+                    while(no!=origem):
+                        print(f"{no}", end=' ')
+                        no = predecessor[no]
+                    print(origem)
+
+        except EOFError:
+            pass
