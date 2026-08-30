@@ -1,0 +1,204 @@
+"""
+Laboratório 6 - Aplicar coloração nos vértices com o mínimo de cores (número cromático)
+Disciplina: Teoria dos Grafos
+Aluno: Bernardo Friske de Souza
+Professor: Luis Augusto Martins Pereira
+"""
+class Graph:
+        """Representa um grafo não-direcionado usando listas de adjacência ordenadas."""
+
+        def __init__(self):
+            """Inicializa um dicionário vazio para armazenar os vértices e vizinhos."""
+            self.dicio = {}
+
+        def _busca_binaria_indice(self, lista, x):
+            """
+            Realiza busca binária para encontrar a posição correta de inserção.
+            Retorna o índice onde 'x' está ou deveria ser inserido para manter a ordem.
+            """
+            baixa = 0
+            alta = len(lista) - 1
+
+            while baixa <= alta:
+                meio = (baixa + alta) // 2
+                if lista[meio] < x:
+                    baixa = meio + 1
+                elif lista[meio] > x:
+                    alta = meio - 1
+                else:
+                    return meio  # Elemento já existe
+            return baixa  # Posição ideal de inserção
+
+        def aresta(self, v1, v2):
+            """ Adiciona uma aresta entre v1 e v2, atualizando a lista de ambos vértices """
+
+            if v1 not in self.dicio:
+                self.dicio[v1] = []
+            if v2 not in self.dicio:
+                self.dicio[v2] = []
+
+            # Insere mantendo a ordem alfabética e evita duplicatas
+            self._inserir_ordenado(v1, v2)
+            self._inserir_ordenado(v2, v1)
+
+        def _inserir_ordenado(self, origem, destino):
+            """Método auxiliar para inserir um vizinho na lista de forma ordenada."""
+            lista = self.dicio[origem]
+            idx = self._busca_binaria_indice(lista, destino)
+
+            # Só insere se o destino não existir na lista (evita arestas repetidas)
+            if idx == len(lista) or lista[idx] != destino:
+                lista.insert(idx, destino)
+
+        def ordem(self):
+            """Retorna o número de vértices no grafo."""
+            return len(self.dicio)
+
+        def graus_min_max(self):
+            """Retorna o grau mínimo e o grau máximo encontrados no grafo."""
+            if not self.dicio:
+                return 0, 0
+            graus = [len(lista) for lista in self.dicio.values()]
+            return min(graus), max(graus)
+
+        def existe_aresta(self, v1, v2):
+            """Verifica a existência de uma aresta entre v1 e v2 usando busca binária."""
+            if v1 not in self.dicio:
+                return False
+            lista = self.dicio[v1]
+            idx = self._busca_binaria_indice(lista, v2)
+            return idx < len(lista) and lista[idx] == v2
+
+        def cria_matriz(self, vertices_ordernados):
+          """Cria a matriz de adjacência a partir da lista de adjacência"""
+          matriz = [[0 for _ in vertices_ordernados] for _ in vertices_ordenados]
+          aux=0;
+          for j in vertices_ordenados:
+            for v in self.dicio[j]:
+              for i in range(len(vertices_ordenados)):
+                if v==vertices_ordenados[i]:
+                  posicao=i;
+              #posicao = v.index(vertices_ordenados)
+              matriz[aux][posicao] = 1
+              matriz[posicao][aux] = 1
+            aux+=1
+          return matriz
+
+
+        def ordenacao_topologica (self, visitados, lista, no ):
+          """Realiza a ordenação topológica do grafo"""
+          visitados[no]=True
+          for u in self.dicio[no][::-1]:
+            if visitados[u]==False:
+              self.ordenacao_topologica(visitados, lista, u)
+          lista.append(no)
+
+        def ordena_grafo (self, vertices_ordenados):
+          """Função auxiliar que coordena ordenacao_topologica()"""
+          visitados={}
+          lista=[]
+          lista_invertida=[]
+          for i in range(len(vertices_ordenados)):
+            lista_invertida.append(vertices_ordenados[len(vertices_ordenados)-1-i])
+          for no in lista_invertida:
+            visitados[no]=False
+          for no in lista_invertida:
+            if visitados[no]==False:
+              self.ordenacao_topologica(visitados, lista, no)
+          return lista
+
+
+        def ordena_graus(self):
+          """Ordena os vértices do grafo de acordo com o grau em ordem não crescente"""
+          if not self.dicio:
+              return {}
+
+          pares_vertices_graus = [[vertice, len(lista)] for vertice, lista in self.dicio.items()]
+          tam = len(pares_vertices_graus)
+
+          # Algoritmo de ordenação manual com regra de desempate
+          for i in range(tam):
+              for j in range(i + 1, tam):
+                  grau_i = pares_vertices_graus[i][1]
+                  grau_j = pares_vertices_graus[j][1]
+                  vertice_i = pares_vertices_graus[i][0]
+                  vertice_j = pares_vertices_graus[j][0]
+
+                  # Verifica se precisa trocar (Grau maior OU Grau igual com vértice menor)
+                  if grau_i < grau_j or (grau_i == grau_j and vertice_i > vertice_j):
+                      aux = pares_vertices_graus[i]
+                      pares_vertices_graus[i] = pares_vertices_graus[j]
+                      pares_vertices_graus[j] = aux
+
+          dicionario_graus = {vertice: grau for vertice, grau in pares_vertices_graus}
+          return dicionario_graus
+
+
+        def colore_vertices(self, dicio_graus):
+                """colore os vértices de acordo com a cor dos vizinhos"""
+                cores = {}
+                for u in dicio_graus.keys():
+                    cores_proibidas = []
+                    for v in self.dicio[u]:
+                        if v in cores:
+                            cores_proibidas.append(cores[v])
+                    cor = 0
+                    while cor in cores_proibidas:
+                        cor += 1
+                    cores[u] = cor
+                return cores
+
+
+
+def acha_ciclos (matriz):
+  """Econtra ciclos no grafo a partir da matriz de adjacência """
+  #tam=len(matriz)
+  tam=0
+  ciclos=0
+  for linha in matriz:
+              tam+=1
+  # Encontra caminhos distintos de comprimento exatamente 2 com extremos comuns
+  for u in range(tam):
+    lista=[0 for _ in range(tam)]
+    for v in range(u+1, tam):
+      if matriz[u][v] == 1:
+        for w in range(u+1, tam):
+          if matriz[v][w] == 1: # and w != u: (lógica desnecessária pois garanti que w>v>u)
+            if lista[w]>0:
+              ciclos+=lista[w]
+              lista[w]+=1
+            else:
+              lista[w]=1
+  return ciclos
+
+
+# --- Bloco de Execução Principal ---
+if __name__ == "__main__":
+        try:
+            # 1. Leitura do número de arestas
+            tam = int (input())
+            if not tam:
+                exit()
+            grafo = Graph()
+
+            # 2. Leitura das N arestas
+            for _ in range(tam):
+                v1, v2 = map(int, input().split())
+                grafo.aresta(v1, v2)
+
+            # 3. Lista com vértices ordenados lexicograficamente
+            vertices_ordenados = sorted(grafo.dicio.keys())
+
+            # 4. Lista com vértices ordenados pelo grau
+            dicio_graus={}
+            dicio_graus=grafo.ordena_graus()
+            #print(grafo.dicio)
+            #print(dicio_graus)
+
+            # 5. Coloração dos vértices
+            dicio_cores=grafo.colore_vertices(dicio_graus)
+            for v in vertices_ordenados:
+              print(f"{v} {dicio_cores[v]}")
+
+        except EOFError:
+            pass
